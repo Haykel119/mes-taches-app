@@ -49,12 +49,17 @@ function App() {
 		tacheAvecRappel.rappelDate = dateRappel.toISOString();
 	  }
 
-	  const { data, error } = await supabase.from('taches').insert([tacheAvecRappel]);
-	  if (error) {
-		console.error("Erreur ajout tâche :", error);
-	  } else {
-		await chargerTaches(); // Recharge la liste après ajout
-	  }
+	  const { data: tachesData, error } = await supabase
+		.from('taches')
+		.select('*')
+		.order('created_at', { ascending: false });
+
+		if (error) {
+		  console.error('Erreur chargement tâches:', error);
+		} else {
+		  setTaches(tachesData);
+		}
+
 	};
 
 
