@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import TacheForm from './TacheForm';
 import { supabase } from './supabaseClient';
 
@@ -12,7 +12,7 @@ function App() {
   const [tri, setTri] = useState("date");
 
   // Charger les tâches filtrées par user_id
-  const chargerTaches = async () => {
+  const chargerTaches = useCallback(async () => {
     if (!user) return;
     const { data, error } = await supabase
       .from('taches')
@@ -25,7 +25,7 @@ function App() {
     } else {
       setTaches(data);
     }
-  };
+  }, [user]);
 
   // Calcul date rappel (exclut samedi/dimanche)
   const getRappelDate = (dateLimiteStr, joursAvant) => {
@@ -43,13 +43,8 @@ function App() {
 
   // Ajouter une nouvelle tâche avec user_id
   const handleNouvelleTache = async (tache) => {
-    if (!user){
-    console.error("Utilisateur non connecté, impossible d’ajouter la tâche"); 
-	return;
-  
-	}
-	console.log("Utilisateur connecté :", user);
-	
+    if (!user) return;
+
     const tacheAvecRappel = {
       ...tache,
       statut: tache.statut || "À faire",
@@ -70,18 +65,6 @@ function App() {
     }
   };
 
-  // Supprimer tâche filtrée par user_id
-  const supprimerTache = async (id) => {
-    if (!user) return;
-
-    const { error } = await supabase.from('taches').delete().eq('id', id).eq('user_id', user.id);
-    if (error) {
-      console.error("Erreur suppression tâche :", error);
-    } else {
-      await chargerTaches();
-    }
-  };
-
   // Modifier statut tâche filtrée par user_id
   const modifierStatut = async (id, statut) => {
     if (!user) return;
@@ -89,6 +72,18 @@ function App() {
     const { error } = await supabase.from('taches').update({ statut }).eq('id', id).eq('user_id', user.id);
     if (error) {
       console.error("Erreur mise à jour statut :", error);
+    } else {
+      await chargerTaches();
+    }
+  };
+
+  // Supprimer tâche filtrée par user_id
+  const supprimerTache = async (id) => {
+    if (!user) return;
+
+    const { error } = await supabase.from('taches').delete().eq('id', id).eq('user_id', user.id);
+    if (error) {
+      console.error("Erreur suppression tâche :", error);
     } else {
       await chargerTaches();
     }
@@ -137,7 +132,7 @@ function App() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, chargerTaches]);
 
   // Composant Auth (connexion/déconnexion)
   function Auth() {
