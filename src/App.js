@@ -134,46 +134,60 @@ function App() {
     return () => clearInterval(interval);
   }, [user, chargerTaches]);
 
-  // Composant Auth (connexion/déconnexion)
-  function Auth() {
-    const [email, setEmail] = useState("");
+ function Auth() {
+  const [email, setEmail] = useState("");
 
-    const handleLogin = async () => {
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) alert('Erreur connexion : ' + error.message);
-      else alert('Email de connexion envoyé !');
-    };
-
-    const handleLogout = async () => {
-      await supabase.auth.signOut();
-    };
-
-    if (user) {
-      return (
-        <div className="mb-6">
-          Connecté : {user.email}{" "}
-          <button onClick={handleLogout} className="ml-4 px-3 py-1 bg-red-500 text-white rounded">
-            Déconnexion
-          </button>
-        </div>
-      );
+  const handleLogin = async () => {
+    if (!email) {
+      alert("Merci de saisir un email valide.");
+      return;
     }
+    console.log("Tentative de connexion pour :", email);
+    const { data, error } = await supabase.auth.signInWithOtp({ email });
+    console.log("Réponse Supabase signInWithOtp:", data, error);
+    if (error) {
+      alert('Erreur connexion : ' + error.message);
+    } else {
+      alert('Email de connexion envoyé à ' + email + ' ! Vérifiez votre boîte mail.');
+    }
+  };
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      alert('Erreur lors de la déconnexion : ' + error.message);
+    } else {
+      alert('Déconnexion réussie');
+    }
+  };
+
+  if (user) {
     return (
       <div className="mb-6">
-        <input
-          type="email"
-          placeholder="Votre email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 mr-2"
-        />
-        <button onClick={handleLogin} className="px-3 py-2 bg-blue-600 text-white rounded">
-          Se connecter
+        Connecté : {user.email}{" "}
+        <button onClick={handleLogout} className="ml-4 px-3 py-1 bg-red-500 text-white rounded">
+          Déconnexion
         </button>
       </div>
     );
   }
+
+  return (
+    <div className="mb-6">
+      <input
+        type="email"
+        placeholder="Votre email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        className="border border-gray-300 rounded px-3 py-2 mr-2"
+      />
+      <button onClick={handleLogin} className="px-3 py-2 bg-blue-600 text-white rounded">
+        Se connecter
+      </button>
+    </div>
+  );
+}
+
 
   // Filtrer et trier tâches
   const tachesFiltrees = taches
